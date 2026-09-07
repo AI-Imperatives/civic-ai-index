@@ -1,0 +1,196 @@
+{
+  "matchedWebsite": 712,
+  "matchedName": 66,
+  "matchedEvidence": 13,
+  "evidenceMatches": [
+    {
+      "uid": "G3O-I-00651649",
+      "g3oName": "ARLINGTON PUBLIC SCHOOLS",
+      "ncesName": "ARLINGTON COUNTY PUBLIC SCHOOLS",
+      "state": "VA",
+      "leaid": "5100270"
+    },
+    {
+      "uid": "G3O-I-00653344",
+      "g3oName": "COLUMBUS PUBLIC SCHOOLS",
+      "ncesName": "COLUMBUS CITY SCHOOLS DISTRICT",
+      "state": "OH",
+      "leaid": "3904380"
+    },
+    {
+      "uid": "G3O-I-00719703",
+      "g3oName": "Charleston School District",
+      "ncesName": "CHARLESTON 01",
+      "state": "SC",
+      "leaid": "4501440"
+    },
+    {
+      "uid": "G3O-I-00657595",
+      "g3oName": "LAKELAND DISTRICT",
+      "ncesName": "LAKELAND",
+      "state": "TN",
+      "leaid": "4700154"
+    },
+    {
+      "uid": "G3O-I-00658993",
+      "g3oName": "Medford Public Schools",
+      "ncesName": "MEDFORD",
+      "state": "MA",
+      "leaid": "2507560"
+    },
+    {
+      "uid": "G3O-I-00719683",
+      "g3oName": "Cabot School District",
+      "ncesName": "CABOT SCHOOL DISTRICT",
+      "state": "AR",
+      "leaid": "0503750"
+    },
+    {
+      "uid": "G3O-I-00654577",
+      "g3oName": "Deerfield School District",
+      "ncesName": "DEERFIELD SD 109",
+      "state": "IL",
+      "leaid": "1711980"
+    },
+    {
+      "uid": "G3O-I-00719797",
+      "g3oName": "Farmington School District",
+      "ncesName": "FARMINGTON SCHOOL DISTRICT",
+      "state": "CT",
+      "leaid": "0901560"
+    },
+    {
+      "uid": "G3O-I-00720074",
+      "g3oName": "Newington School District",
+      "ncesName": "NEWINGTON SCHOOL DISTRICT",
+      "state": "CT",
+      "leaid": "0902880"
+    },
+    {
+      "uid": "G3O-I-00720138",
+      "g3oName": "Plymouth School District",
+      "ncesName": "PLYMOUTH JOINT SCHOOL DISTRICT",
+      "state": "WI",
+      "leaid": "5511940"
+    },
+    {
+      "uid": "G3O-I-00664478",
+      "g3oName": "Westminster School District",
+      "ncesName": "WESTMINSTER",
+      "state": "CA",
+      "leaid": "0642150"
+    },
+    {
+      "uid": "G3O-I-00651636",
+      "g3oName": "ARCADIA PUBLIC SCHOOLS",
+      "ncesName": "ARCADIA SCHOOL DISTRICT",
+      "state": "WI",
+      "leaid": "5500420"
+    },
+    {
+      "uid": "G3O-I-00656364",
+      "g3oName": "HARVARD PUBLIC SCHOOLS",
+      "ncesName": "HARVARD",
+      "state": "MA",
+      "leaid": "2505880"
+    }
+  ],
+  "unmatched": [
+    {
+      "uid": "G3O-I-00720325",
+      "name": "Windham School District",
+      "website": "http://www.windhamsd.org",
+      "finding_count": 4
+    },
+    {
+      "uid": "G3O-I-00652558",
+      "name": "Bellevue School District",
+      "website": "https://bsd405.org/",
+      "finding_count": 3
+    },
+    {
+      "uid": "G3O-I-00660189",
+      "name": "OVERTON PUBLIC SCHOOLS",
+      "website": null,
+      "finding_count": 3
+    },
+    {
+      "uid": "G3O-I-00652875",
+      "name": "Brentwood School District",
+      "website": null,
+      "finding_count": 2
+    },
+    {
+      "uid": "G3O-I-00653097",
+      "name": "CAMBRIDGE PUBLIC SCHOOLS",
+      "website": null,
+      "finding_count": 2
+    },
+    {
+      "uid": "G3O-I-00659588",
+      "name": "NORFOLK PUBLIC SCHOOLS",
+      "website": null,
+      "finding_count": 2
+    },
+    {
+      "uid": "G3O-I-00661607",
+      "name": "Richmond County",
+      "website": "http://www.rcboe.org/",
+      "finding_count": 2
+    },
+    {
+      "uid": "G3O-I-00719614",
+      "name": "Auburn School District",
+      "website": "http://www.auburn.wednet.edu",
+      "finding_count": 1
+    },
+    {
+      "uid": "G3O-I-00719711",
+      "name": "Cherokee County",
+      "website": null,
+      "finding_count": 1
+    },
+    {
+      "uid": "G3O-I-00719816",
+      "name": "Fulton County",
+      "website": "https://www.fultonschools.org/",
+      "finding_count": 1
+    },
+    {
+      "uid": "G3O-I-00719871",
+      "name": "Henry County",
+      "website": "http://www.henry.k12.ga.us/",
+      "finding_count": 1
+    },
+    {
+      "uid": "G3O-I-00720069",
+      "name": "Narragansett",
+      "website": null,
+      "finding_count": 1
+    },
+    {
+      "uid": "G3O-I-00660520",
+      "name": "PIERCE PUBLIC SCHOOLS",
+      "website": null,
+      "finding_count": 1
+    },
+    {
+      "uid": "G3O-I-00661199",
+      "name": "Quincy School District",
+      "website": null,
+      "finding_count": 1
+    },
+    {
+      "uid": "G3O-I-00720198",
+      "name": "Salem School District",
+      "website": null,
+      "finding_count": 1
+    },
+    {
+      "uid": "G3O-I-00720299",
+      "name": "Waterford School District",
+      "website": null,
+      "finding_count": 1
+    }
+  ]
+}

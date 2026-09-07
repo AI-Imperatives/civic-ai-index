@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { ChevronRight, X, SlidersHorizontal, RotateCcw, ArrowUpRight, Check, Lock, Search } from "lucide-react";
+import raw from "./civic-ai-index.w001.json";
+import { adaptData } from "./adapter.mjs";
 
 /* =====================================================================
    Civic AI Index — standalone prototype (v0.2 draft)
@@ -23,7 +25,9 @@ import { ChevronRight, X, SlidersHorizontal, RotateCcw, ArrowUpRight, Check, Loc
    Design commitments: rank intervals (not point ranks), Verifiability
    surfaced on every row (and driving interval width), a three-click audit.
 
-   ALL SCORES AND FIGURES ARE SYNTHETIC PLACEHOLDER DATA.
+   SCORES AND ROSTER ARE REAL (G3O wave w001, via ./adapter.mjs). buildData()
+   below is the retained synthetic generator, now unused, kept for diffing.
+   Graduation / absenteeism / per-pupil-spending context is not yet in the feed.
    ===================================================================== */
 
 const T = {
@@ -108,9 +112,11 @@ function buildData() {
   });
   return rows;
 }
-const DATA = buildData();
+// SEAM — real data wired in through the adapter. buildData() is retained above,
+// unused, so the synthetic vs. real view models can be diffed.
+const DATA = adaptData(raw);
 
-const DEFAULT_WEIGHTS = { governance: 0.30, breadth: 0.25, depth: 0.25, verifiability: 0.20 };
+const DEFAULT_WEIGHTS = { breadth: 0.40, depth: 0.40, governance: 0.10, verifiability: 0.10 };
 const COMPONENTS = [
   { key: "breadth", label: "Breadth", native: (r) => `${r.breadthPct}%`, sub: "students reached" },
   { key: "depth", label: "Depth", native: (r) => `${r.depthX.toFixed(1)}×`, sub: "intensity / adopter" },
@@ -163,7 +169,7 @@ function EvidenceChip({ v }) {
     </span>
   );
 }
-function IntervalBand({ rank, half, max = 50 }) {
+function IntervalBand({ rank, half, max = DATA.count }) {
   const lo = Math.max(1, rank - half), hi = Math.min(max, rank + half);
   const pct = (n) => ((n - 1) / (max - 1)) * 100, W = 168;
   return (
@@ -272,7 +278,7 @@ function Compare({ rows, remove }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
             <div>
               <div style={{ font: `700 17px ${T.serif}`, color: T.ink }}>{row.name}</div>
-              <div style={{ font: `500 11px ${T.mono}`, color: T.slate, marginTop: 2 }}>#{row.rank} · interval {Math.max(1, row.rank - row.half)}–{Math.min(50, row.rank + row.half)}</div>
+              <div style={{ font: `500 11px ${T.mono}`, color: T.slate, marginTop: 2 }}>#{row.rank} · interval {Math.max(1, row.rank - row.half)}–{Math.min(DATA.count, row.rank + row.half)}</div>
             </div>
             <button onClick={() => remove(row.abbr)} style={{ border: "none", background: "none", cursor: "pointer", color: T.slate2 }}><X size={16} /></button>
           </div>
@@ -292,8 +298,8 @@ function Compare({ rows, remove }) {
           <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px dashed ${T.ctx}` }}>
             <div style={{ font: `600 10px ${T.sans}`, letterSpacing: "0.08em", textTransform: "uppercase", color: T.ctx, marginBottom: 6 }}>Educational context · not scored</div>
             <Row k="NAEP composite (2024)" v={row.naep[2024]} />
-            <Row k="Graduation rate" v={row.grad + "%"} />
-            <Row k="Chronic absenteeism" v={row.absent + "%"} />
+            <Row k="Graduation rate" v={row.grad != null ? row.grad + "%" : "—"} />
+            <Row k="Chronic absenteeism" v={row.absent != null ? row.absent + "%" : "—"} />
           </div>
         </div>
       ))}
@@ -395,7 +401,7 @@ function Methodology() {
       {B("Rank intervals, not point ranks", <>Every state sits inside a rank interval that widens where evidence is thin. This answers the standard objection — "we are not lagging, we are under-documented" — inside the visual itself.</>)}
       {B("The educational-performance layer is firewalled", <>NAEP grade-4 and grade-8 reading and math (2019, 2022, 2024), graduation rate, and chronic absenteeism are shown as <b>context only</b> and are never part of the Index score. They come from the Index's own data layer, joined to G3O adoption by state. The performance baseline predates meaningful classroom AI; it describes what kinds of states adopt, not what adoption does. Any two-axis view is descriptive, adjusts for nothing, and asserts no relationship.</>)}
       <div style={{ marginTop: 8, padding: "14px 16px", background: T.goldSoft, border: `1px solid ${T.gold}`, borderRadius: 8, font: `500 13px/1.55 ${T.sans}`, color: T.ink }}>
-        Draft prototype. Every score, state figure, deployment, source, and performance number shown here is <b>synthetic placeholder data</b> generated to exercise the interface. No real evaluation has been published.
+        Adoption data: documented deployments from the Global Government GenAI Observatory (G3O), wave w001; coverage is in progress and not yet systematic, so figures describe the documented record, not a census. Governance and corroboration are documented rarely at this stage and are reported as findings. Sources — G3O (CC BY 4.0), NCES enrollment, NAEP performance context. Context is descriptive and never part of any score.
       </div>
     </div>
   );
@@ -415,7 +421,7 @@ function Drawer({ row, onClose }) {
             <div>
               <div style={{ font: `600 10.5px ${T.sans}`, letterSpacing: "0.14em", textTransform: "uppercase", opacity: 0.7 }}>State profile · Education domain</div>
               <div style={{ font: `700 24px ${T.serif}`, marginTop: 4 }}>{row.name}</div>
-              <div style={{ font: `500 12px ${T.mono}`, opacity: 0.85, marginTop: 3 }}>#{row.rank} · interval {Math.max(1, row.rank - row.half)}–{Math.min(50, row.rank + row.half)} · {fmtEnroll(row.enroll)} students</div>
+              <div style={{ font: `500 12px ${T.mono}`, opacity: 0.85, marginTop: 3 }}>#{row.rank} · interval {Math.max(1, row.rank - row.half)}–{Math.min(DATA.count, row.rank + row.half)} · {fmtEnroll(row.enroll)} students</div>
             </div>
             <button onClick={onClose} style={{ border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 7, width: 32, height: 32, display: "grid", placeItems: "center", cursor: "pointer" }}><X size={17} /></button>
           </div>
@@ -432,7 +438,7 @@ function Drawer({ row, onClose }) {
 
         <div style={{ padding: "20px 26px" }}>
           <Eyebrow style={{ marginBottom: 4 }}>Deployment roster</Eyebrow>
-          <div style={{ font: `400 13px ${T.sans}`, color: T.slate, marginBottom: 14 }}>The scored evidence behind this state. Open a deployment to reach its sources — the third click of the audit.</div>
+          <div style={{ font: `400 13px ${T.sans}`, color: T.slate, marginBottom: 14 }}>The scored evidence behind this state, from the G3O documented record (wave w001). Open a deployment to reach its sources — the third click of the audit.</div>
           {row.deployments.map((d, i) => {
             const isOpen = open === i, gOn = Object.values(d.guardrails).filter(Boolean).length;
             return (
@@ -469,7 +475,9 @@ function Drawer({ row, onClose }) {
                           <span style={{ font: `700 10px ${T.mono}`, color: "#fff", background: s.credibility === "A" ? T.good : s.credibility === "B" ? T.gold : T.slate2, borderRadius: 4, padding: "1px 5px" }}>{s.credibility}</span>
                           <span style={{ font: `500 13px ${T.sans}`, color: T.ink2 }}>{s.type}</span>
                         </div>
-                        <span style={{ display: "flex", alignItems: "center", gap: 6, font: `500 12px ${T.mono}`, color: T.slate }}>{s.date}<ArrowUpRight size={13} /></span>
+                        {s.date && s.date !== "unknown" && (
+                          <span style={{ display: "flex", alignItems: "center", gap: 6, font: `500 12px ${T.mono}`, color: T.slate }}>{s.date}<ArrowUpRight size={13} /></span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -477,7 +485,7 @@ function Drawer({ row, onClose }) {
               </div>
             );
           })}
-          <div style={{ font: `400 12px ${T.sans}`, color: T.slate2, marginTop: 2, fontStyle: "italic" }}>Deployments and sources shown are synthetic samples.</div>
+          <div style={{ font: `400 12px ${T.sans}`, color: T.slate2, marginTop: 2, fontStyle: "italic" }}>Coverage is in progress, not a census; governance and corroboration are documented rarely at this stage and are reported as findings.</div>
 
           {/* firewalled performance panel */}
           <div style={{ marginTop: 22, border: `1px dashed ${T.ctx}`, borderRadius: 10, background: T.ctxSoft, padding: "16px 18px" }}>
@@ -508,10 +516,10 @@ function Drawer({ row, onClose }) {
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div style={{ background: "#fff", borderRadius: 7, padding: "9px 12px" }}><div style={{ font: `400 11px ${T.sans}`, color: T.slate }}>Graduation rate</div><div style={{ font: `700 18px ${T.mono}`, color: T.ink }}>{row.grad}%</div></div>
-              <div style={{ background: "#fff", borderRadius: 7, padding: "9px 12px" }}><div style={{ font: `400 11px ${T.sans}`, color: T.slate }}>Chronic absenteeism</div><div style={{ font: `700 18px ${T.mono}`, color: T.ink }}>{row.absent}%</div></div>
+              <div style={{ background: "#fff", borderRadius: 7, padding: "9px 12px" }}><div style={{ font: `400 11px ${T.sans}`, color: T.slate }}>Graduation rate</div><div style={{ font: `700 18px ${T.mono}`, color: T.ink }}>{row.grad != null ? `${row.grad}%` : "—"}</div></div>
+              <div style={{ background: "#fff", borderRadius: 7, padding: "9px 12px" }}><div style={{ font: `400 11px ${T.sans}`, color: T.slate }}>Chronic absenteeism</div><div style={{ font: `700 18px ${T.mono}`, color: T.ink }}>{row.absent != null ? `${row.absent}%` : "—"}</div></div>
             </div>
-            <div style={{ font: `400 11px ${T.sans}`, color: T.slate2, marginTop: 10 }}>Baseline confounder on file: ${row.spend.toLocaleString()} per-pupil spending. Captured for later analysis; not displayed as a ranking.</div>
+            <div style={{ font: `400 11px ${T.sans}`, color: T.slate2, marginTop: 10 }}>Baseline confounder on file: {row.spend != null ? `$${row.spend.toLocaleString()} per-pupil spending` : "per-pupil spending pending the NCES pull"}. Captured for later analysis; not displayed as a ranking.</div>
           </div>
         </div>
       </div>
@@ -574,10 +582,9 @@ export default function CivicAIIndex() {
     const rankMap = {}; byComp.forEach((x, i) => (rankMap[x.abbr] = i + 1));
     return arr.map((x) => ({ ...x, rank: rankMap[x.abbr], adoption: Math.round(composite(x, DEFAULT_WEIGHTS)) }));
   }, [enriched, sortKey]);
-  const natAvg = useMemo(() => {
-    const avg = (k) => Math.round(DATA.reduce((s, r) => s + r[k], 0) / DATA.length);
-    return { composite: Math.round(enriched.reduce((s, r) => s + r.composite, 0) / enriched.length), breadthPct: avg("breadthPct"), depthX: +(DATA.reduce((s, r) => s + r.depthX, 0) / DATA.length).toFixed(1), governance: avg("governance"), verifiability: avg("verifiability"), enroll: DATA.reduce((s, r) => s + r.enroll, 0) };
-  }, [enriched]);
+  // national-average row is built in the adapter (means, enroll a sum) and attached to DATA;
+  // its composite is recomputed live so the benchmark tracks the weighting lens
+  const natAvg = useMemo(() => ({ ...DATA.natAvg, composite: Math.round(composite(DATA.natAvg, weights)) }), [weights]);
   const compareRows = ranked.filter((r) => compareSet.has(r.abbr)).slice(0, 5);
   const toggleCompare = (abbr) => setCompareSet((prev) => { const n = new Set(prev); if (n.has(abbr)) n.delete(abbr); else if (n.size < 5) n.add(abbr); return n; });
 
@@ -593,14 +600,15 @@ export default function CivicAIIndex() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <span style={{ font: `500 11.5px ${T.sans}`, opacity: 0.7 }}>Data partner: G3O</span>
-            <span style={{ font: `600 10.5px ${T.sans}`, letterSpacing: "0.08em", textTransform: "uppercase", background: T.gold, color: T.ink, padding: "4px 9px", borderRadius: 5 }}>Sample data</span>
+            <span style={{ font: `600 10.5px ${T.sans}`, letterSpacing: "0.08em", textTransform: "uppercase", background: T.gold, color: T.ink, padding: "4px 9px", borderRadius: 5 }}>G3O w001 · documented record</span>
           </div>
         </div>
       </header>
 
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "30px 28px 18px" }}>
-        <h1 style={{ font: `700 30px/1.2 ${T.serif}`, color: T.ink, margin: "0 0 8px", maxWidth: 740 }}>How far are U.S. school districts advancing through generative AI — and how well is it governed?</h1>
-        <p style={{ font: `400 15px/1.6 ${T.sans}`, color: T.slate, margin: 0, maxWidth: 690 }}>
+        {/* headline breaks once, before the em-dash; the standfirst below shares the same measure */}
+        <h1 style={{ font: `700 30px/1.2 ${T.serif}`, color: T.ink, margin: "0 0 8px", maxWidth: 1024 }}>How far are U.S. school districts advancing through generative AI <br />— and how well is it governed?</h1>
+        <p style={{ font: `400 15px/1.6 ${T.sans}`, color: T.slate, margin: 0, maxWidth: 1024 }}>
           The pilot scores generative-AI adoption across roughly sixteen thousand U.S. school districts, weighted by enrollment and rolled up to the state level, on four components: Breadth, Depth, Governance Quality, and Verifiability. An educational-performance baseline is shown alongside, as context only.
         </p>
       </div>
@@ -642,8 +650,8 @@ export default function CivicAIIndex() {
 
       <footer style={{ borderTop: `1px solid ${T.line}`, background: "#fff" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <span style={{ font: `400 12.5px ${T.sans}`, color: T.slate }}>Authored by the Civic AI Index. Adoption data provided by G3O, a Stanford-based initiative. Enrollment and performance baseline from the Index data layer (NCES).</span>
-          <span style={{ font: `400 12.5px ${T.sans}`, color: T.slate2 }}>Prototype · synthetic data · not for publication</span>
+          <span style={{ font: `400 12.5px ${T.sans}`, color: T.slate }}>Authored by the Civic AI Index. Adoption data from the Global Government GenAI Observatory (G3O), CC BY 4.0. Enrollment from NCES; NAEP shown as performance context, never scored.</span>
+          <span style={{ font: `400 12.5px ${T.sans}`, color: T.slate2 }}>G3O wave w001 · documented record, not a census · context layer in progress</span>
         </div>
       </footer>
 
