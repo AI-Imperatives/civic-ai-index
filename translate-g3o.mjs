@@ -41,7 +41,14 @@ const WEIGHTS = { governance: 0.10, breadth: 0.40, depth: 0.40, verifiability: 0
 // it does not count toward adoption (Breadth, Depth, Governance, Verifiability). It
 // is retained in the roster and summarised in a separate guidance layer.
 const NON_ADOPTION_TYPES = new Set(["policy_guidance"]);
-const countsAsAdoption = f => !NON_ADOPTION_TYPES.has(f.activity_type);
+// High-confidence gate: only confidence === "high" deployment findings are scored.
+// Lower-confidence deployment findings are excluded entirely (not adoption, not
+// guidance, not in the roster); they are only tallied in the run report.
+const classifyFinding = f =>
+  NON_ADOPTION_TYPES.has(f.activity_type) ? "guidance"
+  : f.confidence === "high" ? "adoption"
+  : "excluded";
+const countsAsAdoption = f => classifyFinding(f) === "adoption";
 
 // ----------------------------- helpers ----------------------------
 function hostOf(u) {
@@ -252,6 +259,7 @@ async function main() {
   const states = new Map(); // ST -> { deployments:[], findings:[], districts:Map(leaid->maxStage) }
   const review = { matchedWebsite: 0, matchedName: 0, matchedEvidence: 0, evidenceMatches: [], unmatched: [] };
   const activityTypes = new Map();
+  const excludedByConfidence = new Map(); // non-guidance findings with confidence !== "high"
 
   let detailErrors = 0, suspiciousEmpty = 0; const sampleShapes = [];
   for (let k = 0; k < institutions.length; k++) {
@@ -279,6 +287,11 @@ async function main() {
     let districtMaxStage = null, districtHasAdoption = false;
     for (const f of findings) {
       activityTypes.set(f.activity_type, (activityTypes.get(f.activity_type) || 0) + 1);
+      if (classifyFinding(f) === "excluded") {          // low-confidence deployment: count only
+        const c = String(f.confidence);
+        excludedByConfidence.set(c, (excludedByConfidence.get(c) || 0) + 1);
+        continue;
+      }
       const ev = annotateEvidence(f.evidence, instHost);
       const sw = stageWeight(f);
       const isAdopt = countsAsAdoption(f);
@@ -313,11 +326,12 @@ async function main() {
   const stateRecords = [];
   for (const [ST, S] of [...states].sort()) {
     const findings = S.adoptionFindings;                 // guidance excluded from every component
-    const n = findings.length || 1;
-    const governance = findings.reduce((a, d) => a + d.governanceShare, 0) / n;
-    const verifiability = findings.filter(d => d.verified).length / n;
+    // a state with no scored-adoption findings is UNSCORED: components are null, not 0
+    const n = findings.length;
+    const governance = n ? findings.reduce((a, d) => a + d.governanceShare, 0) / n : null;
+    const verifiability = n ? findings.filter(d => d.verified).length / n : null;
     const documentationRate = governance; // mean governanceShare
-    const zeroSafeguardShare = findings.filter(d => !anySafeguardYes(d)).length / n;
+    const zeroSafeguardShare = n ? findings.filter(d => !anySafeguardYes(d)).length / n : null;
     const stageMix = { proposed: 0, announced: 0, pilot: 0, production: 0, unknown: 0 };
     for (const [, maxStage] of S.districts) stageMix[maxStage === null ? "unknown" : stageLabelOf(maxStage)]++;
     // guidance layer: districts with guidance, and those whose ONLY activity is guidance
@@ -379,13 +393,17 @@ async function main() {
     console.error(`  This means the finding array is not where expected. Sample detail top-level keys:`);
     console.error(`  ` + JSON.stringify(sampleShapes));
   }
-  console.error(`ADOPTION (deployment only): ${adoptingDistricts} districts, ${totalFindings} findings`);
+  const statesWithAdoption = stateRecords.filter(s => s.adoption.inputs.adoptingDistrictCount > 0).length;
+  const excludedTotal = [...excludedByConfidence.values()].reduce((a, b) => a + b, 0);
+  console.error(`SCORED ADOPTION (deployment, confidence=high): ${adoptingDistricts} districts, ${totalFindings} findings`);
+  console.error(`states with >=1 scored-adoption district: ${statesWithAdoption} (of ${stateRecords.length} state records)`);
+  console.error(`EXCLUDED (deployment, confidence!=high): ${excludedTotal} findings ` + JSON.stringify(Object.fromEntries(excludedByConfidence)));
   console.error(`GUIDANCE (separate layer):  ${guidanceOnly} guidance-only districts, ${guidanceFindings} guidance findings`);
   console.error(`activity_type vocabulary:   ` + JSON.stringify(Object.fromEntries([...activityTypes].sort((a, b) => b[1] - a[1]))));
   console.error(`wrote ${OUT_DATA} and ${OUT_REVIEW}`);
   console.error("Breadth/Depth are null pending the NCES enrollment pull (Translator 2).");
 }
-function round(x) { return Math.round(x * 1000) / 1000; }
+function round(x) { return x == null ? null : Math.round(x * 1000) / 1000; }
 
 // export for testing; run main() only when invoked directly (cross-platform:
 // pathToFileURL handles Windows drive letters and backslashes correctly)

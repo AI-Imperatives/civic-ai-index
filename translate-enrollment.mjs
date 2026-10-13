@@ -157,7 +157,8 @@ function main() {
     const st = s.state, a = s.adoption;
     const total = totalByState.get(st) || 0;
     const num = adoptEnroll.get(st) || 0;
-    const breadth = total > 0 ? num / total : null;
+    // a state with no adopting districts is UNSCORED: breadth is null, not 0
+    const breadth = total > 0 && (adoptCount.get(st) || 0) > 0 ? num / total : null;
     const dDen = depthDen.get(st) || 0, dNum = depthNum.get(st) || 0;
     const depth = dDen > 0 ? dNum / dDen : null;
     a.breadth = breadth == null ? null : round(breadth);
@@ -172,7 +173,15 @@ function main() {
   // then blend. Governance and verifiability stay raw (near-zero floors this wave);
   // normalising them would amplify meaningless jitter, contrary to their low weights.
   // Raw breadth/depth are left intact for the two-axis reach-vs-intensity view.
-  const scorable = data.states.filter(s => s.adoption.breadth != null && s.adoption.depth != null);
+  // Evidence floor: a state is rankable only with enough documented adoption to
+  // support a score. States below either threshold keep their raw breadth/depth but
+  // get no percentiles and composite = null, held out exactly like a no-adoption state.
+  const MIN_DISTRICTS = 3, MIN_FINDINGS = 5;
+  const meetsFloor = s => (s.adoption.inputs.adoptingDistrictCount || 0) >= MIN_DISTRICTS
+                       && (s.adoption.inputs.findingCount || 0) >= MIN_FINDINGS;
+  const hasData = s => s.adoption.breadth != null && s.adoption.depth != null;
+  const belowFloor = data.states.filter(s => hasData(s) && !meetsFloor(s));
+  const scorable = data.states.filter(s => hasData(s) && meetsFloor(s));
   const pctMap = vals => {
     const srt = [...vals].sort((x, y) => x - y), n = vals.length, m = new Map();
     for (const v of new Set(vals)) m.set(v, n > 1 ? srt.filter(x => x < v).length / (n - 1) : 0);
@@ -194,13 +203,15 @@ function main() {
   data.meta.dataStatus = "REAL_ADOPTION";
   data.meta.dataStatusNote = "Adoption fully computed from live G3O wave w001 joined to NCES enrollment. The performance context layer is still pending.";
   data.meta.enrollmentSource = chosen.enrollCol;
+  data.meta.rankingFloor = { minAdoptingDistricts: MIN_DISTRICTS, minFindings: MIN_FINDINGS, note: "States below either threshold are unranked (composite null)." };
   data.meta.compositeMethod = "Composite = 0.40*breadthPercentile + 0.40*depthPercentile + 0.10*governance + 0.10*verifiability. Breadth and Depth are percentile-ranked across scored states; governance and verifiability are raw. Raw breadth and depth are retained for the two-axis view. (w001-v3)";
   fs.writeFileSync(OUT_DATA, JSON.stringify(data, null, 2));
 
   // ---- run report ----
   const ranked = [...scorable].sort((x, y) => y.adoption.composite - x.adoption.composite);
   console.error("\n==== enrollment aggregate report ====");
-  console.error(`states scored (breadth & depth computed): ${statesScored} of ${data.states.length}`);
+  console.error(`states scored (breadth & depth computed, >=${MIN_DISTRICTS} districts & >=${MIN_FINDINGS} findings): ${statesScored} of ${data.states.length}`);
+  console.error(`held out below evidence floor: ${belowFloor.length} ` + JSON.stringify(belowFloor.map(s => `${s.state}(${s.adoption.inputs.adoptingDistrictCount}d/${s.adoption.inputs.findingCount}f)`)));
   console.error(`adopting districts not found in enrollment file: ${notInEnrollFile}`);
   console.error(`adopting districts with no enrollment value:      ${adoptMissingEnroll}`);
   console.error(`wrote ${OUT_DATA}`);
