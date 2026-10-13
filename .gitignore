@@ -5,3 +5,5 @@ Thumbs.db
 .env
 .env.*
 .claude/
+/probe.mjs
+/civic-ai-index.w001.json
